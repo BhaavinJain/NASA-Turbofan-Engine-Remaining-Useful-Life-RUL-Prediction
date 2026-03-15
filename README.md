@@ -109,6 +109,10 @@ Models closer to this line indicate better predictive performance.
 
 ![Model Comparison](model_comparision_plot.png)
 
+<p align="center">
+  <img src="model_prediction_comparison.png" width="650">
+</p>
+
 Observations:
 
 * Tree-based models like Random Forest and XGBoost capture nonlinear relationships but struggle with long-term degradation patterns.
