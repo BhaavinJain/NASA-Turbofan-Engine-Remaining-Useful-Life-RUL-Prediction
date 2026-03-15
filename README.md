@@ -98,6 +98,23 @@ Before implementing the LSTM model, several baseline machine learning models wer
 * Gradient Boosting Regressor
 * Recurrent Neural Network (RNN)
 * LSTM Neural Network
+  
+## Model Prediction Comparison
+
+The following visualization compares the predicted Remaining Useful Life values from different models against the actual RUL values.
+
+The dashed red line represents perfect predictions (Predicted RUL = Actual RUL).
+
+Models closer to this line indicate better predictive performance.
+
+![Model Comparison](model_comparison_plot.png)
+
+Observations:
+
+* Tree-based models like Random Forest and XGBoost capture nonlinear relationships but struggle with long-term degradation patterns.
+* RNN improves performance by learning sequential dependencies.
+* LSTM performs the best because it effectively captures long-term temporal patterns in engine sensor data.
+
 
 These models were trained using the processed sensor features and their performance was compared using regression metrics.
 
