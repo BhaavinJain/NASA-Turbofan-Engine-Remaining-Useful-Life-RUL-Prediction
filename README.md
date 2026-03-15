@@ -107,7 +107,7 @@ The dashed red line represents perfect predictions (Predicted RUL = Actual RUL).
 
 Models closer to this line indicate better predictive performance.
 
-![Model Comparison](model_comparison_plot.png)
+![Model Comparison](model_comparision_plot.png)
 
 Observations:
 
