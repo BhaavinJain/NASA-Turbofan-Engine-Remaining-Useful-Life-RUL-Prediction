@@ -56,15 +56,31 @@ This creates the target variable that the model learns to predict.
 
 ### 3. Data Cleaning and Sensor Selection
 
-Some sensors in the dataset contain:
+## Sensor Degradation Visualization
 
-* constant values
-* near constant values
-* no degradation patterns
+To better understand the behavior of the turbofan engines, an exploratory analysis was performed on the sensor measurements across engine cycles.
 
-Such sensors were removed to reduce noise and improve model performance.
+The following visualization shows how each sensor measurement evolves over time for a sample engine. This helps identify sensors that exhibit clear degradation patterns as the engine approaches failure.
 
----
+<p align="center">
+  <img src="sensor_degradation_visualization.png" width="700">
+</p>
+
+### Observations
+
+* Some sensors show **clear degradation trends** as the engine cycles increase, indicating useful predictive signals for Remaining Useful Life estimation.
+* Certain sensors exhibit **monotonic increases or decreases**, suggesting that they are strongly correlated with engine wear.
+* A few sensors remain **constant or nearly constant across cycles**, indicating that they do not provide meaningful information for predicting failure.
+
+### Feature Selection Insight
+
+Based on this analysis:
+
+* Sensors with **little or no variation** were removed from the dataset.
+* Sensors showing **clear temporal degradation patterns** were retained for model training.
+
+This step helps reduce noise, improve model performance, and ensure that the model focuses on **informative degradation signals**.
+
 
 ### 4. Feature Scaling
 
@@ -107,10 +123,8 @@ The dashed red line represents perfect predictions (Predicted RUL = Actual RUL).
 
 Models closer to this line indicate better predictive performance.
 
-![Model Comparison](model_comparision_plot.png)
-
 <p align="center">
-  <img src="model_prediction_comparison.png" width="650">
+  <img src="model_comparision_plot.png" width="650">
 </p>
 
 Observations:
