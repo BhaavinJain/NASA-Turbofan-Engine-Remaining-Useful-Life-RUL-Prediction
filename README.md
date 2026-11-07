@@ -104,77 +104,55 @@ This converts the dataset into a **3D structure required for LSTM models**:
 
 ---
 
-## Models Trained and Compared
+## Results — v2 (FD001 official test set, 100 engines, mean ± std over 3 seeds)
 
-Before implementing the LSTM model, several baseline machine learning models were trained to evaluate performance and establish a benchmark.
+| Model | RMSE ↓ | NASA score ↓ |
+|-------|--------|--------------|
+| **XGBoost** (flattened 30-cycle windows) | **14.60 ± 0.13** | **311 ± 10** |
+| LSTM (64 → 32) | 14.97 ± 0.18 | 332 ± 10 |
+| Random Forest | 17.27 ± 0.14 | 637 ± 27 |
 
-### Models Used
+NASA score is the asymmetric CMAPSS metric: late predictions (overestimating remaining life) are penalised exponentially harder than early ones, because a late prediction means a missed failure.
 
-* Random Forest Regressor
-* Gradient Boosting Regressor
-* Recurrent Neural Network (RNN)
-* LSTM Neural Network
-  
-## Model Prediction Comparison
+![Predicted vs true RUL](rul_predictions_cap125.png)
 
-The following visualization compares the predicted Remaining Useful Life values from different models against the actual RUL values.
+### Ablation: RUL cap
 
-The dashed red line represents perfect predictions (Predicted RUL = Actual RUL).
+| Model | Uncapped target | Capped at 125 |
+|-------|-----------------|---------------|
+| LSTM | 26.48 ± 1.46 (score 14,762) | **14.97** (score 332) |
+| XGBoost | 22.35 ± 0.62 (score 12,396) | **14.60** (score 311) |
+| Random Forest | 23.61 ± 0.13 (score 3,597) | **17.27** (score 637) |
 
-Models closer to this line indicate better predictive performance.
+Without the cap, models predict very long lives for healthy engines and are badly late on many of them — visible in the ~40× worse NASA score.
 
-<p align="center">
-  <img src="model_comparision_plot.png" width="650">
-</p>
+## What changed from v1 → v2
 
-Observations:
+My first version (`v1_exploration.ipynb`) reported **RMSE 22.4**, but that was validation on a random split of overlapping windows. On the official test set it scored **32.8**.
 
-* Tree-based models like Random Forest and XGBoost capture nonlinear relationships but struggle with long-term degradation patterns.
-* RNN improves performance by learning sequential dependencies.
-* LSTM performs the best because it effectively captures long-term temporal patterns in engine sensor data.
+| Issue in v1 | Fix in v2 | Why |
+|-------------|-----------|-----|
+| Random split of overlapping 30-cycle windows | **Engine-wise split** (80 / 20 engines) | Adjacent windows share 29/30 cycles — a random split leaks training data into validation |
+| Uncapped RUL target | **Piecewise-linear cap at 125** | Early-life cycles show no degradation; predicting RUL 300 vs 200 is unlearnable noise |
+| Trees on single rows, LSTM on windows | **All models on identical 30-cycle windows** | Fair comparison |
+| `time_in_cycles` used as a feature | Removed | Leaks age directly instead of learning degradation |
+| Label = RUL of the *next* cycle | Label = RUL at the window's last cycle | Matches how test prediction works |
+| Scaler fit before split | Fit on training engines only | Avoids leakage |
+| Unscaled target, early stopping too eager | Target scaled to [0,1], gradient clipping, LR decay | One LSTM seed collapsed to predicting the mean before this fix |
 
+**Net effect:** LSTM official test RMSE **32.8 → 15.0**.
 
-These models were trained using the processed sensor features and their performance was compared using regression metrics.
+## Key finding: XGBoost matches the LSTM on FD001
 
-This comparison helped demonstrate that **deep learning models designed for sequential data perform better at capturing engine degradation patterns**.
+FD001 has a single operating condition and one fault mode, so degradation is smooth and close to monotonic. With only 100 training engines, a flattened 30-cycle window already captures the trend, and gradient-boosted trees match the sequence model. Sequence models are expected to pull ahead on FD002/FD004 (six operating conditions) — the natural next experiment.
 
----
+## Run
 
-## LSTM Model Architecture
-
-The final model uses a Long Short-Term Memory network to capture temporal dependencies in sensor data.
-
-Architecture:
-
-LSTM Layer
-Dropout Layer
-Dense Output Layer
-
-The LSTM learns how sensor measurements evolve over time before engine failure.
-
----
-
-## Model Training
-
-Training configuration:
-
-Optimizer: Adam
-Loss Function: Mean Squared Error (MSE)
-
-The model minimizes the difference between predicted RUL and actual RUL using backpropagation.
-
----
-
-## Prediction
-
-For each engine in the test dataset:
-
-* The last sequence of cycles is extracted
-* The trained model predicts the Remaining Useful Life
-
-This simulates real-world predictive maintenance scenarios where engines have not yet failed.
-
----
+```bash
+python -m venv .venv && .venv\Scripts\activate
+pip install -r requirements.txt
+python RUL_V2.py        # set CAP = 10**6 on line 13 for the ablation
+```
 
 ## Technologies Used
 
